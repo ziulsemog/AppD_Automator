@@ -1,0 +1,5 @@
+{
+  "name": "AppD Automator",
+  "description": "Automates the generation of daily environment checklists from AppDynamics data using AI, ready for Microsoft Teams.",
+  "requestFramePermissions": []
+}
