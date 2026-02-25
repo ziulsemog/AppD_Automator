@@ -63,5 +63,19 @@ O **AppD Automator** é uma ferramenta profissional de SRE e Observabilidade que
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
 
+## 🖥️ Telas
+
+<img width="1658" height="768" alt="image" src="https://github.com/user-attachments/assets/4e160430-4356-4cd7-a3cb-ec135a784fc2" />
+
+<img width="1625" height="761" alt="image" src="https://github.com/user-attachments/assets/ec85960f-0e01-4a5e-bda5-b6ebee7b7c5e" />
+
+<img width="1656" height="775" alt="image" src="https://github.com/user-attachments/assets/6bb0e73d-19f0-4580-846c-eff01e12c2d4" />
+
+<img width="1652" height="771" alt="image" src="https://github.com/user-attachments/assets/176a370c-0bf0-48d1-95f5-db2741e3d61c" />
+
+<img width="1654" height="775" alt="image" src="https://github.com/user-attachments/assets/a4a740ed-5ca8-40d1-b1c6-49dd66c63576" />
+
+<img width="902" height="409" alt="image" src="https://github.com/user-attachments/assets/ddabf254-529d-4aac-ad00-a1ef91022fbe" />
+
 ---
 Desenvolvido por [Luiz Gomes](https://github.com/ziulsemog)
