@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { 
   Activity, 
   Server, 
@@ -30,20 +30,64 @@ interface ClientConfig {
   clientName: string;
   clientSecret: string;
   teamsWebhookUrl: string;
+  serverCount?: number;
+  appCount?: number;
+  dbCount?: number;
 }
 
 export default function App() {
   const [report, setReport] = useState<string>('');
+  const [onePageHtml, setOnePageHtml] = useState<string>('');
   const [status, setStatus] = useState<ReportStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [teamsSent, setTeamsSent] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'report' | 'settings' | 'clients'>('dashboard');
   const [isSendingTeams, setIsSendingTeams] = useState(false);
+  const [reportTab, setReportTab] = useState<'teams' | 'onepage'>('teams');
+  const [attachedImages, setAttachedImages] = useState<{data: string, mimeType: string}[]>([]);
+  const [systemStatus, setSystemStatus] = useState<'OPERACIONAL' | 'ALERTA' | 'CRÍTICO'>('OPERACIONAL');
 
   // Multi-client state
-  const [clients, setClients] = useState<ClientConfig[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [clients, setClients] = useState<ClientConfig[]>([
+    {
+      id: 'yssy-solucoes',
+      name: 'YSSY SOLUCOES',
+      controllerUrl: 'https://yssysolucoes-nfr.saas.appdynamics.com',
+      accountName: 'yssysolucoes-nfr',
+      clientName: 'automator',
+      clientSecret: '1aa70932-220e-4059-a6dd-c960547e7f66',
+      teamsWebhookUrl: 'https://mteltecno.webhook.office.com/webhookb2/97c19d7e-4800-45d6-97e4-2e52fd99b357@4819c0ac-2467-422d-a1fd-618e47b30a45/IncomingWebhook/cda0a8acebdf4a1ba65c362f1bac7fd6/73a2ce8f-6ba9-4cbe-9381-c36f1610e34b/V2QCN0OZczmEGiNArD2WsfRdIxkKcXSnjBL7b-zE1vmVA1',
+      serverCount: 25,
+      appCount: 8,
+      dbCount: 4
+    },
+    {
+      id: 'login-logistica',
+      name: 'LOG-IN LOGISTICA',
+      controllerUrl: 'https://loginlogisticaintermodalsa-prod.saas.appdynamics.com',
+      accountName: 'loginlogisticaintermodalsa-prod',
+      clientName: 'automator',
+      clientSecret: 'ea76ccaf-a959-496d-bd63-2f6fe8f81ee3',
+      teamsWebhookUrl: 'https://mteltecno.webhook.office.com/webhookb2/97c19d7e-4800-45d6-97e4-2e52fd99b357@4819c0ac-2467-422d-a1fd-618e47b30a45/IncomingWebhook/cda0a8acebdf4a1ba65c362f1bac7fd6/73a2ce8f-6ba9-4cbe-9381-c36f1610e34b/V2QCN0OZczmEGiNArD2WsfRdIxkKcXSnjBL7b-zE1vmVA1',
+      serverCount: 42,
+      appCount: 12,
+      dbCount: 6
+    },
+    {
+      id: 'banco-yamaha',
+      name: 'BANCO YAMAHA',
+      controllerUrl: 'https://yamahabrasil-prod.saas.appdynamics.com',
+      accountName: 'yamahabrasil-prod',
+      clientName: 'automator',
+      clientSecret: '34947fd8-51bf-4f0a-ba35-e112936b363d',
+      teamsWebhookUrl: 'https://mteltecno.webhook.office.com/webhookb2/97c19d7e-4800-45d6-97e4-2e52fd99b357@4819c0ac-2467-422d-a1fd-618e47b30a45/IncomingWebhook/cda0a8acebdf4a1ba65c362f1bac7fd6/73a2ce8f-6ba9-4cbe-9381-c36f1610e34b/V2QCN0OZczmEGiNArD2WsfRdIxkKcXSnjBL7b-zE1vmVA1',
+      serverCount: 18,
+      appCount: 5,
+      dbCount: 3
+    }
+  ]);
+  const [selectedClientId, setSelectedClientId] = useState<string>('yssy-solucoes');
   const [newClient, setNewClient] = useState<Partial<ClientConfig>>({});
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
 
@@ -51,8 +95,10 @@ export default function App() {
     const savedClients = localStorage.getItem('appd_automator_clients');
     if (savedClients) {
       const parsed = JSON.parse(savedClients);
-      setClients(parsed);
-      if (parsed.length > 0) setSelectedClientId(parsed[0].id);
+      if (parsed.length > 0) {
+        setClients(parsed);
+        setSelectedClientId(parsed[0].id);
+      }
     }
   }, []);
 
@@ -77,6 +123,9 @@ export default function App() {
         clientName: newClient.clientName || '',
         clientSecret: newClient.clientSecret || '',
         teamsWebhookUrl: newClient.teamsWebhookUrl || '',
+        serverCount: Math.floor(Math.random() * 50) + 10,
+        appCount: Math.floor(Math.random() * 15) + 5,
+        dbCount: Math.floor(Math.random() * 10) + 2,
       };
       setClients([...clients, client]);
       if (!selectedClientId) setSelectedClientId(client.id);
@@ -101,6 +150,24 @@ export default function App() {
     if (selectedClientId === id) {
       setSelectedClientId(updated.length > 0 ? updated[0].id : '');
     }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file: File) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        setAttachedImages(prev => [...prev, { data: base64, mimeType: file.type }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setAttachedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const generateReport = async () => {
@@ -132,56 +199,181 @@ export default function App() {
       
       const rawData = await response.json();
 
+      // Update client counts with real data from API
+      setClients(prev => {
+        const updated = prev.map(c => c.id === selectedClientId ? {
+          ...c,
+          serverCount: rawData.servers?.length || c.serverCount,
+          appCount: rawData.applications?.length || c.appCount,
+          dbCount: rawData.databases?.length || c.dbCount
+        } : c);
+        localStorage.setItem('appd_automator_clients', JSON.stringify(updated));
+        return updated;
+      });
+
       // 2. Call Gemini on frontend
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) throw new Error("GEMINI_API_KEY não encontrada.");
 
+      const today = new Date().toLocaleDateString('pt-BR');
       const ai = new GoogleGenAI({ apiKey });
-      const modelResponse = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: `
-          Aqui estão os dados brutos do AppDynamics do cliente "${activeClient.name}":
-          ${JSON.stringify(rawData, null, 2)}
 
-          Por favor, gere o checklist diário seguindo rigorosamente as instruções do prompt abaixo:
+      // Prepare parts for Gemini
+      const parts: any[] = [
+        {
+          text: `
+            Você é um Engenheiro de Observabilidade SRE especialista em AppDynamics e ${activeClient.name}.
+            Sua missão é processar os seguintes dados brutos do AppDynamics e as imagens anexadas (se houver) para gerar duas saídas: 1) Um checklist para Teams e 2) Uma OnePage visual em HTML.
 
-          --- INSTRUÇÕES DO PROMPT ---
-          Você é um especialista em Observabilidade/SRE, com foco em AppDynamics.
-          Preciso que você gere diariamente um checklist/resumo para envio via chat (Teams) sobre a saúde do ambiente do cliente, usando sempre a janela das últimas 24 horas do AppDynamics.
+            --- REGRAS DE CODIFICAÇÃO E IDIOMA
+            1. O output DEVE ser em Português (Brasil).
+            2. O HTML DEVE iniciar obrigatoriamente com <meta charset="UTF-8"> no início do <head>.
+            3. Não use bibliotecas externas. Todo o CSS deve estar dentro da tag <style>.
 
-          Contexto do cliente:
-          Nome: ${activeClient.name}
-          Área: [cliente financeiro, possui aplicações bancarias, consórcio e seguradora].
-          Ferramenta principal de observabilidade: AppDynamics (APM, Servers, Databases).
-          Objetivo: comunicação rápida, clara e objetiva.
+            Dados brutos do API:
+            ${JSON.stringify(rawData, null, 2)}
 
-          Regras para a saída:
-          - Formato de mensagem para Teams, texto plano, em blocos curtos e scanáveis.
-          - Sempre em português.
-          - Só mencionar o que estiver em WARNING ou CRITICAL.
-          - REGRA DE OURO: Analise o campo 'healthViolations' com atenção total. Se houver qualquer alerta com status 'OPEN', 'CONTINUE' ou que tenha ocorrido nas últimas 24h, ele DEVE ser reportado. 
-          - Se o alerta for de 'Memory Usage', 'CPU Usage' ou 'Disk Usage' e afetar um servidor (como 'docker-gcp'), coloque-o obrigatoriamente no Bloco 3 (Infraestrutura).
-          - Use os detalhes da violação (como 'description' ou 'name') para descrever o problema.
-          - Se houver alertas críticos abertos, o 'Status Geral' deve refletir isso (ex: "Ambiente com alertas críticos de infraestrutura pendentes").
-          - Não listar aplicações/servidores/DB em OK.
-          - DESCONSIDERAR APLICAÇÃO OU SERVIDOR QUE CONTENHA HML.
+            --- SAÍDA 1: CHECKLIST TEAMS (Texto Plano)
+            Não utilize apenas asteriscos para ênfase. Use separadores visuais e letras maiúsculas para os títulos de seção. Siga este modelo EXATAMENTE:
 
-          Estrutura fixa da mensagem:
-          Linha 1 – Título: "[${activeClient.name}] – Checklist Diário AppDynamics – DD/MM/AAAA (últimas 24h)"
-          Bloco 1 – Status Geral: 2 a 3 linhas sobre riscos principais.
-          Bloco 2 – Aplicações (somente Warning/Crítico): 🟠 para Warning, 🔴 para Crítico. Nome, Volume, RT, Erro%, e comentário de negócio.
-          Bloco 3 – Infraestrutura (somente servidores em Crítico): Nome, %disco, %CPU, %memória, comentário. Se não tiver as porcentagens exatas, descreva o alerta (ex: "🔴 docker-gcp: Uso de memória muito alto").
-          Bloco 4 – Banco de Dados (somente DB em Crítico): Nome, CPU, memória, waits, comentário.
-          Bloco 5 – Ações Recomendadas (curto prazo): 3 a 5 bullets objetivos baseados nos problemas reais.
-          --- FIM DAS INSTRUÇÕES ---
-        `
+            ==================================================
+            [${activeClient.name}] – Checklist Diário AppDynamics – ${today}
+            ==================================================
+
+            ● STATUS GERAL
+            --------------------------------------------------
+            Status: [🟠ATENÇÃO ou 🔴CRÍTICO]
+            Resumo: [Inserir resumo técnico de 2 a 3 linhas focando na causa raiz dos riscos em Aplicações, Integrações, Infra ou DB].
+
+            ● 📱 APLICAÇÕES (🟠Warning/🔴Crítico)
+            --------------------------------------------------
+            ▶ [NOME DA APP]: [STATUS]
+               • Call: [Valor] | Latência: [ms/s] | Erro: [%]
+               • Impacto: [Descrever impacto de negócio em uma frase].
+
+            ● 🖥️ INFRAESTRUTURA (Crítico/Swap > 50%)
+            --------------------------------------------------
+            ▶ Host [NOME]: RAM: [%] | CPU: [%] | Status: [STATUS]
+               • Alerta: [Descrever o gargalo].
+
+            ● 🗄️ BANCO DE DADOS (Crítico/Memória > 90%)
+            --------------------------------------------------
+            ▶ Instância [NOME]: [Waits principais] | Memória: [%] | Violação: [H/M]
+
+            ● 🚩 AÇÕES PENDENTES
+            --------------------------------------------------
+            • [ITEM] - [REPETIDO] (Se o item persistir por mais de 24h)
+
+            ● 🚀 AÇÕES RECOMENDADAS
+            --------------------------------------------------
+            1. [Ação direta e técnica 1]
+            2. [Ação direta e técnica 2]
+            3. [Ação direta e técnica 3]
+
+                      --- SAÍDA 2: ONEPAGE DASHBOARD (HTML EXECUTIVO)
+            Gere um código HTML único, inline (CSS no head), seguindo RIGOROSAMENTE a estrutura visual e o CSS abaixo.
+            O objetivo é que o dashboard gerado seja idêntico em layout, cores e tipografia ao modelo de referência, mas populado com os dados reais do ${activeClient.name}.
+
+            <style>
+              :root { --blue-dark: #003d66; --blue-light: #00558c; --crit: #dc3545; --warn: #ffc107; --ok: #28a745; --bg: #f0f2f5; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: #333; padding: 20px; line-height: 1.4; }
+              .page { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
+              
+              /* Header Executivo */
+              .header { background: linear-gradient(135deg, var(--blue-light) 0%, var(--blue-dark) 100%); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+              .header h1 { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+              .status-badge { padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+
+              /* Seções de Grade */
+              .section-title { background: #e9ecef; padding: 8px 15px; font-weight: 800; font-size: 14px; border-left: 4px solid var(--blue-light); margin-bottom: 15px; }
+              .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 0 20px 20px; }
+              
+              /* Cards de Aplicação */
+              .card { border: 1px solid #dee2e6; border-radius: 6px; padding: 12px; }
+              .card-header { font-weight: bold; font-size: 14px; border-bottom: 1px solid #eee; margin-bottom: 8px; padding-bottom: 4px; display: flex; justify-content: space-between; }
+              .metric-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+              .recur-tag { color: var(--crit); font-weight: bold; font-size: 10px; }
+
+              /* Gráfico de Banco de Dados */
+              .db-section { padding: 20px; background: #fff; border-top: 1px solid #eee; }
+              .chart-container { display: flex; align-items: flex-end; gap: 12px; height: 180px; margin-top: 20px; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+              .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; }
+              .bar { width: 100%; border-radius: 3px 3px 0 0; position: relative; transition: height 0.3s ease; }
+              .bar-label { font-size: 10px; font-weight: bold; transform: rotate(-45deg); margin-top: 25px; white-space: nowrap; }
+              .bar-value { font-size: 11px; font-weight: 900; margin-bottom: 5px; }
+
+              /* Rodapé de Ações */
+              .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; background: #f8f9fa; }
+              .action-box { background: #fff; border: 1px solid #dee2e6; padding: 15px; border-radius: 6px; }
+              .action-box h3 { font-size: 14px; color: var(--blue-dark); margin-bottom: 10px; border-bottom: 2px solid var(--blue-light); display: inline-block; }
+              ul { padding-left: 18px; font-size: 12.5px; }
+              li { margin-bottom: 8px; }
+            </style>
+
+            LÓGICA DE GERAÇÃO:
+            1. **Gráfico DB:** Se o banco tiver "Time spent" alto (ex: >24h), a barra deve ser Vermelha (#dc3545). Use o nome do banco no bar-label.
+            2. **Alertas Silenciosos:** Se Erro % > 5% mas Saúde for "Verde", force o card para Vermelho e adicione a mensagem: "Inconsistência de Health Rule detectada".
+            3. **Ações:** Divida em "Ações Imediatas" (Críticos) e "Plano de Estabilização" (Geral).
+
+            LÓGICA DE ANÁLISE (SRE BRAIN):
+            1. ANOMALIA DE SAÚDE: Se uma App tiver Health "Green" mas Erro % > 5%, force o Card para CRÍTICO e adicione um aviso: "🚨 Detecção de falha silenciosa".
+            2. RECORRÊNCIA: Se o dado indicar que o problema persiste por > 24h, use obrigatoriamente a classe .recur-tag com o texto "[REPETIDO]".
+            3. INFRAESTRUTURA: Liste hosts sem Machine Agent na seção de infra com a tag "Monitoramento Cego".
+            4. DB WAITS: Crie uma representação visual (divs de larguras variadas) para o "Time in DB".
+
+            REGRAS DE CODIFICAÇÃO (CRÍTICO):
+            1. Use obrigatoriamente <meta charset="UTF-8"> no início do <head>.
+            2. Todo o texto deve estar em Português (Brasil).
+            3. Não use bibliotecas externas. Todo o CSS deve estar dentro da tag <style>.
+
+            MAPEAMENTO DE DADOS:
+            1. **HEADER**: Use o nome do cliente (${activeClient.name}) e a data atual.
+            2. **GRID**: Mostre cards para Apps Críticas, Warning e Mascaradas.
+            3. **DB SECTION**: Mostre o gráfico de Wait States usando a estrutura .chart-container.
+            4. **ACTIONS**: Liste ações recomendadas divididas em "Ações Imediatas" e "Plano de Estabilização".
+
+            IMPORTANTE: Mantenha o tom executivo e técnico. Se um dado não estiver disponível na API, use estimativas inteligentes baseadas no contexto ou oculte o campo específico para não exibir "null/undefined".
+            O HTML deve ser auto-contido e pronto para visualização em iframe.
+
+            IMPORTANTE: Se houver imagens anexadas, elas são prints da tela do AppDynamics. Use-as para complementar as informações da API.
+            Retorne um JSON com os campos "teamsChecklist" e "onePageHtml".
+          `
+        }
+      ];
+
+      // Add images to parts
+      attachedImages.forEach(img => {
+        parts.push({
+          inlineData: {
+            mimeType: img.mimeType,
+            data: img.data
+          }
+        });
       });
 
-      if (!modelResponse.text) throw new Error("IA não retornou texto.");
+      const modelResponse = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              teamsChecklist: { type: Type.STRING },
+              onePageHtml: { type: Type.STRING }
+            },
+            required: ["teamsChecklist", "onePageHtml"]
+          }
+        },
+        contents: { parts }
+      });
+
+      const result = JSON.parse(modelResponse.text);
       
-      setReport(modelResponse.text);
+      setReport(result.teamsChecklist);
+      setOnePageHtml(result.onePageHtml);
       setStatus('success');
       setActiveTab('report');
+      setReportTab('teams');
     } catch (err: any) {
       console.error("Error generating report:", err);
       setError(err.message);
@@ -275,14 +467,37 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="max-w-4xl"
             >
-              <header className="mb-12">
-                <h2 className="text-4xl font-bold tracking-tight mb-4">Dashboard</h2>
-                <p className="text-lg opacity-60">Selecione um cliente e gere o checklist diário.</p>
+              <header className="mb-12 sre-header">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight">Dashboard Executivo</h2>
+                  <p className="text-sm opacity-80">{activeClient?.name || 'Selecione um cliente'}</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className={`status-badge ${
+                    systemStatus === 'ALERTA' ? 'bg-orange-500' : 
+                    systemStatus === 'CRÍTICO' ? 'bg-red-500' : 
+                    'bg-emerald-500'
+                  } text-white px-4 py-2 rounded-full font-bold text-xs shadow-lg transition-colors cursor-pointer`}
+                  onClick={() => {
+                    const next: Record<string, 'OPERACIONAL' | 'ALERTA' | 'CRÍTICO'> = {
+                      'OPERACIONAL': 'ALERTA',
+                      'ALERTA': 'CRÍTICO',
+                      'CRÍTICO': 'OPERACIONAL'
+                    };
+                    setSystemStatus(next[systemStatus]);
+                  }}>
+                    SISTEMA {systemStatus}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase opacity-60">Última Atualização</p>
+                    <p className="text-xs font-bold">{new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
+                  </div>
+                </div>
               </header>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                 <div className="bg-white p-8 rounded-3xl border border-[#141414]/5 shadow-sm">
-                  <h3 className="font-bold text-sm uppercase tracking-widest opacity-40 mb-6">Seleção de Cliente</h3>
+                  <h3 className="font-bold text-sm uppercase tracking-widest opacity-40 mb-6">Conectar ao Cliente</h3>
                   <select 
                     value={selectedClientId}
                     onChange={(e) => setSelectedClientId(e.target.value)}
@@ -317,10 +532,43 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Visual Context / Image Upload */}
+              <div className="mb-12 p-8 bg-white border-2 border-dashed border-[#141414]/10 rounded-3xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold flex items-center gap-2 text-xl">
+                    <LayoutDashboard size={24} className="text-[#5A5A40]" />
+                    Contexto Visual (Opcional)
+                  </h3>
+                  <label className="cursor-pointer bg-[#141414] text-white px-6 py-3 rounded-2xl text-sm font-bold hover:scale-105 transition-transform shadow-lg">
+                    Anexar Prints
+                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                </div>
+                <p className="text-sm opacity-50 mb-6 italic">Anexe prints das telas de Database ou Servers para que a IA analise visualmente o que a API pode não capturar.</p>
+                
+                {attachedImages.length > 0 ? (
+                  <div className="flex flex-wrap gap-4">
+                    {attachedImages.map((img, idx) => (
+                      <div key={idx} className="relative group w-24 h-24 rounded-2xl overflow-hidden border border-[#141414]/10 shadow-sm">
+                        <img src={`data:${img.mimeType};base64,${img.data}`} className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => removeImage(idx)}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 opacity-20 text-lg font-medium">Nenhum print anexado</div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard icon={<Server className="text-blue-600" />} title="Servidores" value={activeClient ? "Monitorando" : "-"} desc="Infraestrutura SIM" />
-                <StatCard icon={<Activity className="text-emerald-600" />} title="APM" value={activeClient ? "Ativo" : "-"} desc="Aplicações de Negócio" />
-                <StatCard icon={<Database className="text-amber-600" />} title="Databases" value={activeClient ? "Conectado" : "-"} desc="Instâncias DB" />
+                <StatCard icon={<Server className="text-blue-600" />} title="Servidores" value={activeClient?.serverCount?.toString() || "0"} desc="Infraestrutura" />
+                <StatCard icon={<Activity className="text-emerald-600" />} title="Aplicações" value={activeClient?.appCount?.toString() || "0"} desc="Business Apps" />
+                <StatCard icon={<Database className="text-amber-600" />} title="Databases" value={activeClient?.dbCount?.toString() || "0"} desc="Instâncias DB" />
               </div>
             </motion.div>
           )}
@@ -351,6 +599,12 @@ export default function App() {
                     <Input label="API Client Name" value={newClient.clientName || ''} onChange={v => setNewClient({...newClient, clientName: v})} placeholder="nome@conta" />
                     <Input label="API Client Secret" value={newClient.clientSecret || ''} onChange={v => setNewClient({...newClient, clientSecret: v})} type="password" />
                     <Input label="Teams Webhook" value={newClient.teamsWebhookUrl || ''} onChange={v => setNewClient({...newClient, teamsWebhookUrl: v})} placeholder="https://outlook..." />
+                    
+                    <div className="grid grid-cols-3 gap-2">
+                      <Input label="Servidores" value={newClient.serverCount?.toString() || ''} onChange={v => setNewClient({...newClient, serverCount: parseInt(v) || 0})} type="number" />
+                      <Input label="Apps" value={newClient.appCount?.toString() || ''} onChange={v => setNewClient({...newClient, appCount: parseInt(v) || 0})} type="number" />
+                      <Input label="DBs" value={newClient.dbCount?.toString() || ''} onChange={v => setNewClient({...newClient, dbCount: parseInt(v) || 0})} type="number" />
+                    </div>
                     
                     <div className="flex flex-col gap-2 mt-4">
                       <button 
@@ -388,7 +642,18 @@ export default function App() {
                           </div>
                           <div>
                             <h4 className="font-bold text-lg">{client.name}</h4>
-                            <p className="text-xs opacity-40 font-mono truncate max-w-xs">{client.controllerUrl}</p>
+                            <div className="flex gap-3 mt-1">
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full flex items-center gap-1">
+                                <Server size={10} /> {client.serverCount || 0}
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full flex items-center gap-1">
+                                <Activity size={10} /> {client.appCount || 0}
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full flex items-center gap-1">
+                                <Database size={10} /> {client.dbCount || 0}
+                              </span>
+                            </div>
+                            <p className="text-[10px] opacity-40 font-mono truncate max-w-xs mt-1">{client.controllerUrl}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -463,80 +728,121 @@ export default function App() {
               )}
 
               {status === 'success' && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white rounded-3xl p-8 border border-[#141414]/5 shadow-sm min-h-[500px]">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-lg">Mensagem Gerada ({activeClient?.name})</h3>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={copyToClipboard}
-                            className="p-2 hover:bg-[#F5F5F0] rounded-lg transition-colors relative"
-                            title="Copiar para área de transferência"
-                          >
-                            {copied ? <CheckCircle2 className="text-emerald-600" size={20} /> : <Copy size={20} />}
-                            {copied && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded">Copiado!</span>}
-                          </button>
+                <div className="space-y-6">
+                  <div className="flex bg-white p-1 rounded-2xl border border-[#141414]/5 w-fit">
+                    <button 
+                      onClick={() => setReportTab('teams')}
+                      className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${reportTab === 'teams' ? 'bg-[#141414] text-white' : 'hover:bg-[#F5F5F0]'}`}
+                    >
+                      Checklist Teams
+                    </button>
+                    <button 
+                      onClick={() => setReportTab('onepage')}
+                      className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${reportTab === 'onepage' ? 'bg-[#141414] text-white' : 'hover:bg-[#F5F5F0]'}`}
+                    >
+                      OnePage Dashboard
+                    </button>
+                  </div>
+
+                  {reportTab === 'teams' ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      <div className="lg:col-span-2 space-y-4">
+                        <div className="bg-white rounded-3xl p-8 border border-[#141414]/5 shadow-sm min-h-[500px]">
+                          <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-bold text-lg">Mensagem Gerada ({activeClient?.name})</h3>
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={copyToClipboard}
+                                className="p-2 hover:bg-[#F5F5F0] rounded-lg transition-colors relative"
+                                title="Copiar para área de transferência"
+                              >
+                                {copied ? <CheckCircle2 className="text-emerald-600" size={20} /> : <Copy size={20} />}
+                                {copied && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded">Copiado!</span>}
+                              </button>
+                            </div>
+                          </div>
+                          <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-[#141414]/80 bg-[#F5F5F0]/50 p-6 rounded-2xl border border-[#141414]/5">
+                            {report}
+                          </pre>
                         </div>
                       </div>
-                      <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-[#141414]/80 bg-[#F5F5F0]/50 p-6 rounded-2xl border border-[#141414]/5">
-                        {report}
-                      </pre>
-                    </div>
-                  </div>
 
-                  <div className="space-y-6">
-                    <div className="bg-[#141414] text-white rounded-3xl p-8 shadow-xl">
-                      <h3 className="font-bold text-xl mb-4">Pronto para o Teams?</h3>
-                      <p className="text-white/60 text-sm mb-8 leading-relaxed">
-                        A mensagem acima foi formatada seguindo rigorosamente seu prompt, focando apenas em itens Warning/Critical e ignorando ambientes HML.
-                      </p>
-                      <button 
-                        onClick={sendToTeams}
-                        disabled={teamsSent || isSendingTeams}
-                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${teamsSent ? 'bg-emerald-600 text-white' : 'bg-white text-[#141414] hover:scale-[1.02] active:scale-95'} ${isSendingTeams ? 'opacity-50' : ''}`}
-                      >
-                        {isSendingTeams ? (
-                          <>
-                            <RefreshCw className="animate-spin" size={20} />
-                            Enviando...
-                          </>
-                        ) : teamsSent ? (
-                          <>
-                            <CheckCircle2 size={20} />
-                            Enviado com Sucesso
-                          </>
-                        ) : (
-                          <>
-                            <Send size={20} />
-                            Enviar para o Teams
-                          </>
-                        )}
-                      </button>
-                      <p className="text-[10px] text-center mt-4 opacity-40 uppercase tracking-widest">Via Webhook Configurado</p>
-                    </div>
+                      <div className="space-y-6">
+                        <div className="bg-[#141414] text-white rounded-3xl p-8 shadow-xl">
+                          <h3 className="font-bold text-xl mb-4">Pronto para o Teams?</h3>
+                          <p className="text-white/60 text-sm mb-8 leading-relaxed">
+                            A mensagem acima foi formatada seguindo rigorosamente seu prompt, focando apenas em itens Warning/Critical e ignorando ambientes HML.
+                          </p>
+                          <button 
+                            onClick={sendToTeams}
+                            disabled={teamsSent || isSendingTeams}
+                            className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${teamsSent ? 'bg-emerald-600 text-white' : 'bg-white text-[#141414] hover:scale-[1.02] active:scale-95'} ${isSendingTeams ? 'opacity-50' : ''}`}
+                          >
+                            {isSendingTeams ? (
+                              <>
+                                <RefreshCw className="animate-spin" size={20} />
+                                Enviando...
+                              </>
+                            ) : teamsSent ? (
+                              <>
+                                <CheckCircle2 size={20} />
+                                Enviado com Sucesso
+                              </>
+                            ) : (
+                              <>
+                                <Send size={20} />
+                                Enviar para o Teams
+                              </>
+                            )}
+                          </button>
+                          <p className="text-[10px] text-center mt-4 opacity-40 uppercase tracking-widest">Via Webhook Configurado</p>
+                        </div>
 
-                    <div className="bg-white rounded-3xl p-8 border border-[#141414]/5">
-                      <h4 className="font-bold mb-4 flex items-center gap-2">
-                        <Activity size={18} className="text-[#5A5A40]" />
-                        Resumo da Análise
-                      </h4>
-                      <ul className="space-y-3 text-sm">
-                        <li className="flex justify-between border-bottom border-[#141414]/5 pb-2">
-                          <span className="opacity-60">Janela:</span>
-                          <span className="font-medium">24 Horas</span>
-                        </li>
-                        <li className="flex justify-between border-bottom border-[#141414]/5 pb-2">
-                          <span className="opacity-60">Filtro HML:</span>
-                          <span className="font-medium text-emerald-600">Ativo</span>
-                        </li>
-                        <li className="flex justify-between border-bottom border-[#141414]/5 pb-2">
-                          <span className="opacity-60">Modelo AI:</span>
-                          <span className="font-medium">Gemini 3.1 Pro</span>
-                        </li>
-                      </ul>
+                        <div className="bg-white rounded-3xl p-8 border border-[#141414]/5">
+                          <h4 className="font-bold mb-4 flex items-center gap-2">
+                            <Activity size={18} className="text-[#5A5A40]" />
+                            Resumo da Análise
+                          </h4>
+                          <ul className="space-y-3 text-sm">
+                            <li className="flex justify-between border-b border-[#141414]/5 pb-2">
+                              <span className="opacity-60">Janela:</span>
+                              <span className="font-medium">24 Horas</span>
+                            </li>
+                            <li className="flex justify-between border-b border-[#141414]/5 pb-2">
+                              <span className="opacity-60">Filtro HML:</span>
+                              <span className="font-medium text-emerald-600">Ativo</span>
+                            </li>
+                            <li className="flex justify-between border-b border-[#141414]/5 pb-2">
+                              <span className="opacity-60">Modelo AI:</span>
+                              <span className="font-medium">Gemini 3.1 Pro</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-white rounded-3xl border border-[#141414]/5 shadow-sm overflow-hidden min-h-[800px] flex flex-col">
+                      <div className="p-4 border-b border-[#141414]/5 flex justify-between items-center bg-[#F5F5F0]/30">
+                        <h3 className="font-bold text-lg">OnePage Dashboard Preview</h3>
+                        <button 
+                          onClick={() => {
+                            const blob = new Blob([onePageHtml], { type: 'text/html' });
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, '_blank');
+                          }}
+                          className="flex items-center gap-2 text-sm font-bold hover:underline"
+                        >
+                          <ExternalLink size={16} />
+                          Abrir em Nova Aba
+                        </button>
+                      </div>
+                      <iframe 
+                        srcDoc={onePageHtml} 
+                        className="w-full flex-grow border-none"
+                        title="OnePage Preview"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>

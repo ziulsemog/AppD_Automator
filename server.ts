@@ -33,23 +33,28 @@ async function startServer() {
         clientId = `${clientId}@${accountName.trim()}`;
       }
 
+      const authHeader = Buffer.from(`${clientId}:${clientSecret.trim()}`).toString('base64');
+      
       const tokenParams = new URLSearchParams();
       tokenParams.append('grant_type', 'client_credentials');
       tokenParams.append('client_id', clientId);
       tokenParams.append('client_secret', clientSecret.trim());
 
+      console.log(`Attempting to get token for ${clientId} at ${tokenUrl}`);
+
       const tokenRes = await fetch(tokenUrl, {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${authHeader}`
         },
         body: tokenParams.toString()
       });
 
       if (!tokenRes.ok) {
         const errText = await tokenRes.text();
-        console.error("AppDynamics Token Error Response:", errText);
-        throw new Error(`Falha ao obter token (OAuth2): ${tokenRes.status} - ${errText}`);
+        console.error(`AppDynamics Token Error Response (${tokenRes.status}):`, errText);
+        throw new Error(`Falha ao obter token (OAuth2): ${tokenRes.status} - ${errText.substring(0, 500)}`);
       }
 
       const tokenData = await tokenRes.json();
@@ -68,63 +73,78 @@ async function startServer() {
       }
       const applications = await appsRes.json();
 
-      // 2. Fetch Health Rule Violations for each app (last 7 days to ensure we catch all OPEN alerts)
+      // 2. Fetch Health Rule Violations and Events for each app
       const healthViolations = [];
-      for (const appItem of applications) {
-        // Skip HML as requested in prompt
+      const events = [];
+      
+      // Also try to fetch from "hidden" applications like SIM or DB Monitoring
+      const allAppsToQuery = [...applications];
+      
+      // Add SIM and DB Monitoring if not already in the list
+      const simAppName = "Server & Infrastructure Monitoring";
+      const dbAppName = "Database Monitoring";
+      
+      if (!allAppsToQuery.find(a => a.name === simAppName)) {
+        allAppsToQuery.push({ name: simAppName });
+      }
+      if (!allAppsToQuery.find(a => a.name === dbAppName)) {
+        allAppsToQuery.push({ name: dbAppName });
+      }
+      
+      for (const appItem of allAppsToQuery) {
         if (appItem.name.toUpperCase().includes("HML")) continue;
 
+        // Fetch Violations
         try {
-          // Increased to 10080 mins (7 days) to capture any alert that might still be OPEN
           const violationsRes = await fetch(
-            `${controllerUrl}/controller/rest/applications/${appItem.id}/problems/healthrule-violations?time-range-type=BEFORE_NOW&duration-in-mins=10080&output=JSON`,
+            `${controllerUrl}/controller/rest/applications/${encodeURIComponent(appItem.name)}/problems/healthrule-violations?time-range-type=BEFORE_NOW&duration-in-mins=1440&output=JSON`,
             { headers }
           );
           if (violationsRes.ok) {
             const violations = await violationsRes.json();
             if (violations && violations.length > 0) {
-              // Filter for violations that are either OPEN or ended within the last 24h
-              const now = Date.now();
-              const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
-              
-              const relevantViolations = violations.filter((v: any) => {
-                const isOpen = v.status === 'OPEN' || v.status === 'CONTINUE';
-                const endedRecently = v.endTimeInMillis && v.endTimeInMillis > twentyFourHoursAgo;
-                return isOpen || endedRecently;
-              });
-
-              if (relevantViolations.length > 0) {
-                healthViolations.push({
-                  appName: appItem.name,
-                  violations: relevantViolations
-                });
-              }
+              healthViolations.push({ appName: appItem.name, violations });
             }
           }
-        } catch (e) {
-          console.error(`Failed to fetch violations for ${appItem.name}`, e);
-        }
+        } catch (e) { console.error(`Failed to fetch violations for ${appItem.name}`, e); }
+
+        // Fetch Events (last 24h)
+        try {
+          const eventsRes = await fetch(
+            `${controllerUrl}/controller/rest/applications/${encodeURIComponent(appItem.name)}/events?time-range-type=BEFORE_NOW&duration-in-mins=1440&event-types=APPLICATION_ERROR,DIAGNOSTIC_SESSION,HEALTH_RULE_VIOLATION_CRITICAL,HEALTH_RULE_VIOLATION_WARNING&output=JSON`,
+            { headers }
+          );
+          if (eventsRes.ok) {
+            const appEvents = await eventsRes.json();
+            if (appEvents && appEvents.length > 0) {
+              events.push({ appName: appItem.name, events: appEvents });
+            }
+          }
+        } catch (e) { console.error(`Failed to fetch events for ${appItem.name}`, e); }
       }
 
-      // 3. Fetch Servers
+      // 3. Fetch Servers (Machine Agents) and their health
       let servers = [];
       try {
-        const serversRes = await fetch(`${controllerUrl}/controller/rest/markethistory/servers?output=JSON`, { headers });
+        const serversRes = await fetch(`${controllerUrl}/controller/rest/markethistory/machine-agents?output=JSON`, { headers });
         if (serversRes.ok) {
           servers = await serversRes.json();
         }
       } catch (e) { console.error("Servers API failed", e); }
 
-      // 4. Fetch Databases
+      // 4. Fetch Databases and their health
       let databases = [];
       try {
-        const dbsRes = await fetch(`${controllerUrl}/controller/rest/databases?output=JSON`, { headers });
-        if (dbsRes.ok) databases = await dbsRes.json();
+        const dbsRes = await fetch(`${controllerUrl}/controller/rest/databases/instances?output=JSON`, { headers });
+        if (dbsRes.ok) {
+          databases = await dbsRes.json();
+        }
       } catch (e) { console.error("Databases API failed", e); }
 
       res.json({
         applications: applications.filter((a: any) => !a.name.toUpperCase().includes("HML")),
         healthViolations,
+        events,
         servers: servers.filter((s: any) => !s.name?.toUpperCase().includes("HML")),
         databases: databases.filter((d: any) => !d.name?.toUpperCase().includes("HML")),
         timestamp: new Date().toISOString()
