@@ -270,69 +270,165 @@ export default function App() {
             2. [Ação direta e técnica 2]
             3. [Ação direta e técnica 3]
 
-                      --- SAÍDA 2: ONEPAGE DASHBOARD (HTML EXECUTIVO)
-            Gere um código HTML único, inline (CSS no head), seguindo RIGOROSAMENTE a estrutura visual e o CSS abaixo.
-            O objetivo é que o dashboard gerado seja idêntico em layout, cores e tipografia ao modelo de referência, mas populado com os dados reais do ${activeClient.name}.
+                      --- SAÍDA 2: ONEPAGE DASHBOARD (HTML PADRÃO CORPORATIVO YSSY)
+            Gere um arquivo HTML5 único, auto-contido, utilizando estritamente a estrutura e classes extraídas do layout padrão da empresa.
 
+            REGRAS DE IDENTIDADE VISUAL E LOGOS:
+            1. Use as URLs de imagens exatas fornecidas abaixo para os cabeçalhos (NÃO invente caminhos locais):
+               - Se o cliente analisado (${activeClient.name}) for Banco Yamaha (ou contiver 'Yamaha'), use exatamente esta URL de logo do cliente no .logo: 'https://media.licdn.com/dms/image/v2/C4D0BAQHQ7AKqq0Nhcg/company-logo_200_200/company-logo_200_200/0/1630580216813/banco_yamaha_motor_do_brasil_logo?e=1780531200&v=beta&t=lV7us5w9-jNHJUk7-jCqG-Y1ztvM--UqI9x6BVoPncE'
+               - Se o cliente analisado (${activeClient.name}) for LogIn Logística (ou contiver 'Login' ou 'LogIn'), use exatamente esta URL de logo do cliente no .logo: 'https://www.loginlogistica.com.br/wp-content/uploads/2023/12/logo.png'
+               - Se for outro cliente, use uma representação de texto ou imagem coerente, mas para estes dois acima, use estritamente estas URLs.
+               - No rodapé (footer), inclua o logo de parceiro da YSSY usando esta URL exata: 'https://yssy.com.br/wp-content/uploads/2025/09/image-1.svg'
+            2. O <head> deve conter rigorosamente a tag '<meta charset="UTF-8">' para anular erros de português.
+
+            CONFIGURAÇÃO DE DESIGN EXCLUSIVA (CSS DETERMINÍSTICO):
+            Injete exatamente este bloco de estilos dentro da tag <style>:
             <style>
-              :root { --blue-dark: #003d66; --blue-light: #00558c; --crit: #dc3545; --warn: #ffc107; --ok: #28a745; --bg: #f0f2f5; }
-              body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: #333; padding: 20px; line-height: 1.4; }
-              .page { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
-              
-              /* Header Executivo */
-              .header { background: linear-gradient(135deg, var(--blue-light) 0%, var(--blue-dark) 100%); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
-              .header h1 { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-              .status-badge { padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+              *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+              body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:13px}
+              .container{max-width:1280px;margin:0 auto;padding:18px}
+              .header-container{background:linear-gradient(135deg,#0d1b3e 0%,#1a3a6e 60%,#0d1b3e 100%);border-radius:14px;padding:22px 28px 18px;margin-bottom:18px;box-shadow:0 4px 20px rgba(0,0,0,.35)}
+              .header-title{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+              .logo{height:48px;background:#fff;border-radius:8px;padding:4px 10px}
+              .title-text h1{color:#fff;font-size:20px;font-weight:700;letter-spacing:.5px}
+              .title-text .subtitle{color:#a8c4e8;font-size:12px;margin-top:3px}
+              .status-pills{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+              .pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+              .pill.critical{background:#c0392b;color:#fff}
+              .pill.warn{background:#e67e22;color:#fff}
+              .pill.degradado{background:#d35400;color:#fff}
+              .pill.ok{background:#27ae60;color:#fff}
+              .pill.rec{background:#8e44ad;color:#fff}
+              .pill.focus{background:#2980b9;color:#fff}
+              .kpi-bar{display:flex;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,.07);border-radius:10px;padding:12px 16px;margin-top:16px}
+              .kpi-item{display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.12);border-radius:8px;padding:8px 16px;min-width:110px;flex:1}
+              .kpi-item .kpi-val{font-size:22px;font-weight:800;color:#fff}
+              .kpi-item .kpi-lbl{font-size:10px;color:#a8c4e8;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;text-align:center}
+              .kpi-item.red .kpi-val{color:#e74c3c}
+              .kpi-item.orange .kpi-val{color:#f39c12}
+              .kpi-item.green .kpi-val{color:#2ecc71}
+              .kpi-item.purple .kpi-val{color:#bb8fce}
+              .grid{display:grid;gap:14px;margin-bottom:14px}
+              .g2{grid-template-columns:repeat(2,1fr)}
+              .g3{grid-template-columns:repeat(3,1fr)}
+              .g4{grid-template-columns:repeat(4,1fr)}
+              @media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+              .card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-left:4px solid #2980b9}
+              .card.cc{border-left-color:#c0392b}
+              .card.wc{border-left-color:#e67e22}
+              .card.dc{border-left-color:#d35400}
+              .card.gc{border-left-color:#27ae60}
+              .card.tc{border-left-color:#16a085}
+              .card h3{font-size:13px;font-weight:700;margin-bottom:10px;color:#1a1a2e;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+              .card ul{padding-left:16px}
+              .card ul li{margin-bottom:5px;line-height:1.5;color:#2c3e50}
+              .st{background:linear-gradient(90deg,#1a3a6e,#0d1b3e);border-radius:8px;padding:8px 16px;margin:18px 0 12px}
+              .st h3{color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+              .m{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #ecf0f1}
+              .m:last-child{border-bottom:none}
+              .m .l{color:#7f8c8d;font-size:12px}
+              .m .v{font-weight:700;font-size:12px;color:#2c3e50}
+              .m .v.r{color:#c0392b}
+              .m .v.o{color:#d35400}
+              .m .v.g{color:#27ae60}
+              .tbl{width:100%;border-collapse:collapse;font-size:12px}
+              .tbl th{background:#1a3a6e;color:#fff;padding:8px 10px;text-align:left;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+              .tbl td{padding:7px 10px;border-bottom:1px solid #ecf0f1;vertical-align:middle}
+              .tbl tr:nth-child(even) td{background:#f8f9fa}
+              .tbl tr:hover td{background:#eaf2ff}
+              .st2{width:100%;border-collapse:collapse;font-size:11.5px}
+              .st2 th{background:#1a3a6e;color:#fff;padding:6px 8px;text-align:left;font-size:11px}
+              .st2 td{padding:5px 8px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+              .st2 tr:nth-child(even) td{background:#f8f9fa}
+              .bdg{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+              .bdg.r{background:#fdecea;color:#c0392b}
+              .bdg.o{background:#fef3e2;color:#d35400}
+              .bdg.g{background:#e9f7ef;color:#27ae60}
+              .di{background:#f8f9fa;border-radius:8px;padding:10px 12px;border-left:3px solid #8e44ad;margin-bottom:8px}
+              .di.r{border-left-color:#c0392b}
+              .di.o{border-left-color:#e67e22}
+              .di.g{border-left-color:#27ae60}
+              .di .dn{font-weight:700;font-size:12px;color:#1a1a2e;margin-bottom:6px}
+              .as{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed #ecf0f1}
+              .as:last-child{border-bottom:none}
+              .an{min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px}
+              .an.r{background:#c0392b}
+              .an.o{background:#d35400}
+              .an.b{background:#2980b9}
+              .an.g{background:#27ae60}
+              .ab{flex:1;font-size:12px;line-height:1.55;color:#2c3e50}
+              .ab strong{color:#1a1a2e}
+              .rt{color:#8e44ad;font-weight:700;font-size:11px}
+              .esc{color:#c0392b;font-weight:700;font-size:11px}
+              .imp{color:#27ae60;font-weight:700;font-size:11px}
+              .note{margin-top:8px;font-size:11.5px;color:#7f8c8d;line-height:1.5}
+              .alerta{background:#fdecea;border-radius:6px;padding:8px 12px;font-size:12px;color:#c0392b;font-weight:600;margin-bottom:10px}
+              .alerta-warn{background:#fef3e2;border-radius:6px;padding:8px 12px;font-size:12px;color:#d35400;font-weight:600;margin-top:10px}
+              .footer{text-align:center;margin-top:22px;padding:12px;background:#1a3a6e;border-radius:8px;color:#a8c4e8;font-size:11px}
+              .footer strong{color:#fff}
 
-              /* Seções de Grade */
-              .section-title { background: #e9ecef; padding: 8px 15px; font-weight: 800; font-size: 14px; border-left: 4px solid var(--blue-light); margin-bottom: 15px; }
-              .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 0 20px 20px; }
-              
-              /* Cards de Aplicação */
-              .card { border: 1px solid #dee2e6; border-radius: 6px; padding: 12px; }
-              .card-header { font-weight: bold; font-size: 14px; border-bottom: 1px solid #eee; margin-bottom: 8px; padding-bottom: 4px; display: flex; justify-content: space-between; }
-              .metric-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
-              .recur-tag { color: var(--crit); font-weight: bold; font-size: 10px; }
-
-              /* Gráfico de Banco de Dados */
-              .db-section { padding: 20px; background: #fff; border-top: 1px solid #eee; }
-              .chart-container { display: flex; align-items: flex-end; gap: 12px; height: 180px; margin-top: 20px; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
-              .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; }
-              .bar { width: 100%; border-radius: 3px 3px 0 0; position: relative; transition: height 0.3s ease; }
-              .bar-label { font-size: 10px; font-weight: bold; transform: rotate(-45deg); margin-top: 25px; white-space: nowrap; }
-              .bar-value { font-size: 11px; font-weight: 900; margin-bottom: 5px; }
-
-              /* Rodapé de Ações */
-              .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; background: #f8f9fa; }
-              .action-box { background: #fff; border: 1px solid #dee2e6; padding: 15px; border-radius: 6px; }
-              .action-box h3 { font-size: 14px; color: var(--blue-dark); margin-bottom: 10px; border-bottom: 2px solid var(--blue-light); display: inline-block; }
-              ul { padding-left: 18px; font-size: 12.5px; }
-              li { margin-bottom: 8px; }
+              /* Estrutura Corrigida do Gráfico de Bancos de Dados */
+              .db-chart-section { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(0,0,0,.05); border-left: 4px solid #8e44ad; }
+              .chart-wrapper { display: flex; align-items: flex-end; justify-content: space-around; height: 160px; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; margin-top: 15px; }
+              .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 60px; }
+              .bar-value { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #333; }
+              .bar-fill { width: 100%; min-height: 5px; border-radius: 4px 4px 0 0; background: #28a745; transition: height 0.4s ease; }
+              .bar-fill.critico { background: #dc3545; }
+              .bar-fill.warning { background: #ffc107; }
+              .bar-label { font-size: 10px; font-weight: 700; color: #555; text-align: center; margin-top: 8px; white-space: nowrap; transform: rotate(-25deg); }
             </style>
 
-            LÓGICA DE GERAÇÃO:
-            1. **Gráfico DB:** Se o banco tiver "Time spent" alto (ex: >24h), a barra deve ser Vermelha (#dc3545). Use o nome do banco no bar-label.
-            2. **Alertas Silenciosos:** Se Erro % > 5% mas Saúde for "Verde", force o card para Vermelho e adicione a mensagem: "Inconsistência de Health Rule detectada".
-            3. **Ações:** Divida em "Ações Imediatas" (Críticos) e "Plano de Estabilização" (Geral).
+            ESTRUTURA E CONTEÚDO DO HTML:
+            O HTML5 gerado deve conter TODAS as seguintes seções estruturadas e preenchidas dinamicamente a partir dos dados do API:
+            1. div class="container" principal.
+            2. HEADER-CONTAINER:
+               - Exiba o logo correto da Regra de Logos no img class="logo".
+               - Título elegante ${activeClient.name} — AppDynamics com legenda (subtitle), e os badges de estado gerais no .status-pills (ex: critical, warn, degradado, ok).
+               - Renderize a .kpi-bar populando os .kpi-item com valores consolidados referentes a Apps (Critical, Warning, Degradado, OK), Servidores e DBs (Critical, Warning), além do Total de Servidores.
+            3. SUMÁRIO + KPIs (usando div class="grid g2"):
+               - Um card com classe .card.cc para o "Sumário Executivo" contendo análises de escalação qualificadas.
+               - Um card padrão .card para os "KPIs do Dia" consolidados.
+            4. APLICAÇÕES:
+               - Título da seção no bloco .st contendo h3 "🚀 Aplicações".
+               - Uma grade flexível div class="grid g2" ou div class="grid g3" contendo os cards individuais de aplicações problemáticas classificados por cor: .card.cc (crítico), .card.wc (warning), .card.dc (degradado), .card.gc (ok).
+               - Exiba as métricas usando a estrutura div class="m" com span class="l" Label e span class="v" Valor. Use classes .v.r (vermelho), .v.o (laranja), .v.g (verde).
+               - Abaixo da grade de problemas, exiba a tabela de pontos residuais ou aplicações saudáveis table class="st2".
+            5. INFRAESTRUTURA:
+               - Bloco .st contendo h3 "🖥️ Infraestrutura".
+               - No topo desta seção, coloque caixas ou cards individuais destacados (em um grid div class="grid g2" ou similar) para cada host / servidor que apresente criticidade ou sob estresse de recursos de CPU, memória ou disco (com classe .card.cc para crítico ou .card.wc para atenção). Inclua dentro de cada card destacado o hostname / ID do servidor, a métrica sob pressão (ex: "Critical CPU Saturation", "Disk Space Exhaustion", "Memory Overload") e um breve diagnóstico clínico / técnico.
+               - Abaixo dos destaques, apresente a tabela detalhada .st2 listando dados de CPU, GPU, Disco, Memória e o diagnóstico correspondente para todos os hospedeiros monitorados.
+            6. BANCO DE DADOS:
+               - Bloco .st contendo h3 "🗄️ Banco de Dados".
+               - No topo desta seção, coloque caixas ou cards individuais destacados, lado a lado (utilizando um grid div class="grid g2" ou similar), exclusivamente para as instâncias de Banco de Dados com maior criticidade de recursos ou gargalos severos no dia analisado (por exemplo, "BYMDPDB002 - Critical CPU Saturation" em um card com classe .card.cc e "BYMDPDB008 - Memory Pressure" em um card com classe .card.wc, ou diagnóstico similar para outras instâncias sob alto estresse técnico).
+               - Abaixo dos blocos com os alertas destacados mais graves, apresente TODAS as instâncias do Banco de Dados listadas em formato de tabela estruturada sob a classe .st2 (idêntica à tabela da seção de servidores / infraestrutura). A tabela deve conter colunas para: Instância, Tipo / Tecnologia, Queries, Time in DB, CPU (%) atual, Status diário (ou Tendência) e Observação / Diagnóstico técnico detalhado. Não exiba o gráfico visual de DB Waits bar-fill ou db-chart-section.
+            7. AÇÕES DE CURTO PRAZO:
+               - Bloco .st contendo h3 "🛠️ Ações de Curto Prazo — [DATA_ATUAL]".
+               - Um grid div class="grid g2" dividindo em cards para "🚀 Aplicações" e "🖥️ Infraestrutura & Banco de Dados".
+               - Use a lista de ações .as com o círculo numbered .an.r (crítico), .an.o (warning), .an.b (azul), etc. e o conteúdo na div .ab.
+            8. TABELA DE RECORRÊNCIA:
+               - Bloco .st contendo h3 "📋 Tabela de Recorrência — Ações não implementadas".
+               - Exiba a tabela consolidada .tbl contendo as colunas: Item (com tag .rt se recorrente), Categoria (.bdg.r ou .bdg.o), Evidência acumulada, Risco, Dias, Tendência, Status.
+            9. FOOTER:
+               - Bloco do rodapé div class="footer" com créditos detalhados à YSSY Solutions e fonte de dados.
+               - Inclua uma representação centralizada ou elegante do logo de parceiro da YSSY 'https://yssy.com.br/wp-content/uploads/2025/09/image-1.svg' logo abaixo do texto com altura máxima de 20px.
+
+            DIRETRIZ DE DESTAQUES DE INFRAESTRUTURA:
+            Ao montar os cards destacados de servidores sob sobrecarga:
+            - Se um servidor possuir métricas alarmantes (CPU > 80%, Memória > 85%, ou Disco > 85%), crie um card de destaque visual com a classe correspondente (.card.cc para crítico ou .card.wc para atenção).
+            - Coloque um cabeçalho curto contendo o nome do host e o problema detectado, seguido por um parágrafo que descreve numericamente o gargalo e propõe um breve diagnóstico técnico ou recomendação preventiva (ex: limpeza de logs IIS ou scale-up).
+
+            DIRETRIZ DE DESTAQUES DE BANCO DE DADOS:
+            Ao montar as caixas ou cards individuais destacados no topo da seção de bancos de dados:
+            - Se a instância possuir violação de consumo (ex: CPU > 95% ou memória extrema), crie um card elegante (utilizando classes como .card.cc para crítico ou .card.wc para atenção) contendo em destaque o ID da instância e a causa (Ex: "BYMDPDB002 - Critical CPU Saturation" ou "BYMDPDB008 - Memory Pressure") e embaixo a descrição exata do status (Ex: "Instância operando em 99.5% de CPU. Alto risco de travamento de conexões transacionais." ou "Uso de memória em 96% (Threshold 95%). Recomendado expurgo de buffers ou scale-up.").
+            - Se o tempo do banco de dados (Time spent in DB / waits) ou erro for crítico por mais de 24 horas consecutivas, certifique-se de que essa instância esteja em destaque nestas caixas e também listada com prioridade na lista detalhada.
 
             LÓGICA DE ANÁLISE (SRE BRAIN):
-            1. ANOMALIA DE SAÚDE: Se uma App tiver Health "Green" mas Erro % > 5%, force o Card para CRÍTICO e adicione um aviso: "🚨 Detecção de falha silenciosa".
-            2. RECORRÊNCIA: Se o dado indicar que o problema persiste por > 24h, use obrigatoriamente a classe .recur-tag com o texto "[REPETIDO]".
+            1. ANOMALIA DE SAÚDE: Se uma App tiver Health "Green" mas Erro % > 5%, force o Card para CRÍTICO (e use a classe .card.cc) e adicione um aviso: "🚨 Detecção de falha silenciosa".
+            2. RECORRÊNCIA: Se o dado indicar que o problema persiste por > 24h, use obrigatoriamente a classe '.rt' com o texto "[REPETIDO]".
             3. INFRAESTRUTURA: Liste hosts sem Machine Agent na seção de infra com a tag "Monitoramento Cego".
-            4. DB WAITS: Crie uma representação visual (divs de larguras variadas) para o "Time in DB".
+            4. BANCOS DE DADOS: Destaque os gargalos de recursos mais severos em caixas separadas no topo e mapeie todas as demais em uma lista de tabela estilo servidores .st2.
 
-            REGRAS DE CODIFICAÇÃO (CRÍTICO):
-            1. Use obrigatoriamente <meta charset="UTF-8"> no início do <head>.
-            2. Todo o texto deve estar em Português (Brasil).
-            3. Não use bibliotecas externas. Todo o CSS deve estar dentro da tag <style>.
-
-            MAPEAMENTO DE DADOS:
-            1. **HEADER**: Use o nome do cliente (${activeClient.name}) e a data atual.
-            2. **GRID**: Mostre cards para Apps Críticas, Warning e Mascaradas.
-            3. **DB SECTION**: Mostre o gráfico de Wait States usando a estrutura .chart-container.
-            4. **ACTIONS**: Liste ações recomendadas divididas em "Ações Imediatas" e "Plano de Estabilização".
-
-            IMPORTANTE: Mantenha o tom executivo e técnico. Se um dado não estiver disponível na API, use estimativas inteligentes baseadas no contexto ou oculte o campo específico para não exibir "null/undefined".
+            IMPORTANTE: Todos os textos devem estar em Português (Brasil). Mantenha o tom executivo e técnico. Deixe a visualização limpa, sem tags CSS ou HTML quebradas no output.
             O HTML deve ser auto-contido e pronto para visualização em iframe.
 
             IMPORTANTE: Se houver imagens anexadas, elas são prints da tela do AppDynamics. Use-as para complementar as informações da API.
