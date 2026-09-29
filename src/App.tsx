@@ -333,14 +333,11 @@ export default function App() {
             <p className="text-[10px] uppercase tracking-widest font-semibold opacity-40 mb-2">Cliente Ativo</p>
             <p className="text-sm font-bold truncate">{activeClient?.name || 'Nenhum'}</p>
           </div>
-          <p className="text-[10px] text-center mt-3 text-[#141414]/40 font-bold uppercase tracking-wider">
-            SRE Observability Team
-          </p>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="md:ml-64 p-8 md:p-12 min-h-screen flex flex-col justify-between">
+      <main className="md:ml-64 p-8 md:p-12">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div 
@@ -776,10 +773,6 @@ export default function App() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <footer className="mt-16 pt-8 border-t border-[#141414]/10 text-center text-xs text-[#141414]/50 font-semibold tracking-wider uppercase">
-          SRE Observability Team
-        </footer>
       </main>
     </div>
   );

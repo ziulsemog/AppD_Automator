@@ -32,7 +32,7 @@ O **AppD Automator** é uma ferramenta profissional de SRE e Observabilidade que
 
 1.  Clone o repositório:
     ```bash
-    git clone https://github.com/ziulsemog/appd-automator.git
+    git clone https://dev.azure.com/ZOSTech/_git/appd-automator
     cd appd-automator
     ```
 

@@ -313,7 +313,7 @@ async function startServer() {
             2. [Ação direta e técnica 2]
             3. [Ação direta e técnica 3]
 
-            --- SAÍDA 2: ONEPAGE DASHBOARD (HTML PADRÃO CORPORATIVO SRE OBSERVABILITY)
+            --- SAÍDA 2: ONEPAGE DASHBOARD (HTML PADRÃO CORPORATIVO YSSY)
             Gere um arquivo HTML5 único, auto-contido, utilizando estritamente a estrutura e classes extraídas do layout padrão da empresa.
 
             REGRAS DE IDENTIDADE VISUAL E LOGOS:
@@ -322,9 +322,7 @@ async function startServer() {
                - Se o cliente analisado (${clientName || ''}) for LogIn Logística (ou contiver 'Login' ou 'LogIn'), use exatamente esta URL de logo do cliente no .logo: 'https://www.loginlogistica.com.br/wp-content/uploads/2023/12/logo.png'
                - Se o cliente analisado (${clientName || ''}) for Stellantis (ou contiver 'Stellantis' ou 'STELLANTIS'), use exatamente esta URL de logo do cliente no .logo: 'https://stellantisportalinstitucional.cdn.prismic.io/stellantisportalinstitucional/Z0SPBa8jQArT1Ryy_logo-footer.svg'
                - Se for outro cliente, use uma representação de texto ou imagem coerente, mas para estes acima, use estritamente estas URLs.
-               - PROIBIÇÃO ABSOLUTA: REMOVER TODOS OS LOGOS DA YSSY. NÃO exiba nenhum logo da Yssy, NUNCA inclua imagem ou link de logo da Yssy. No cabeçalho deve constar apenas o logo do cliente analisado.
             2. O <head> deve conter rigorosamente a tag '<meta charset="UTF-8">' para anular erros de português.
-            3. No RODAPÉ (.footer): É TERMINANTEMENTE PROIBIDO colocar "YSSY". Remover "YSSY" e colocar obrigatoriamente "SRE Observability Team". Exemplo: "SRE Observability Team | Gerado em ${today}".
 
             CONFIGURAÇÃO DE DESIGN EXCLUSIVA (CSS DETERMINÍSTICO):
             Injete exatamente este bloco de estilos dentro da tag <style>:
@@ -377,7 +375,7 @@ async function startServer() {
             </style>
 
             ESTRUTURA DE SEÇÕES MANDATÓRIAS (ONPAGE DASHBOARD):
-            1. HEADER (.header-container) com logomarca do cliente (apenas do cliente, sem logo da Yssy), título, status geral e meta-strip.
+            1. HEADER (.header-container) com logomarcas, título, status geral e meta-strip.
             2. KPI BAR (.kpi-row) com 5 KPIs: Total Apps Monitoradas, Health Rule Violations Críticas, Warning, Servidores sob Risco, Instâncias de Banco com Erro/Waits.
             3. BLOCO RESUMO EXECUTIVO (.st) com análise de impacto.
             4. BLOCO APLICAÇÕES (.st com .st2) contendo cada app relevante.
@@ -385,7 +383,7 @@ async function startServer() {
             6. BLOCO BANCO DE DADOS (.st com .st2) destacando gargalos e instâncias críticas.
             7. BLOCO AÇÕES RECOMENDADAS (.st) com lista numerada de ações preventivas imediatas.
             8. BLOCO RECORRÊNCIA (.st) tabela .tbl com colunas: Item, Categoria, Evidência acumulada, Risco, Dias, Tendência, Status.
-            9. FOOTER (.footer): Deve exibir obrigatoriamente "SRE Observability Team | Gerado em ${today}" (SEM mencionar YSSY).
+            9. FOOTER (.footer): No rodapé deve constar obrigatoriamente a assinatura de créditos com "SRE Observability Team" (NÃO use "Equipe SRE YSSY" nem "Equipe SRE", use estritamente "SRE Observability Team").
 
             DIRETRIZ DE DESTAQUES DE INFRAESTRUTURA:
             - Se um servidor possuir métricas alarmantes (CPU > 80%, Memória > 85%, ou Disco > 85%), crie um card de destaque visual (.card.cc para crítico ou .card.wc para atenção).
@@ -460,6 +458,17 @@ async function startServer() {
 
       const text = modelResponse.text;
       const result = JSON.parse(text);
+
+      if (typeof result.onePageHtml === "string") {
+        result.onePageHtml = result.onePageHtml
+          .replace(/Equipe\s+SRE\s+YSSY/gi, "SRE Observability Team")
+          .replace(/Equipe\s+SRE/gi, "SRE Observability Team");
+      }
+      if (typeof result.teamsChecklist === "string") {
+        result.teamsChecklist = result.teamsChecklist
+          .replace(/Equipe\s+SRE\s+YSSY/gi, "SRE Observability Team");
+      }
+
       res.json(result);
     } catch (error: any) {
       console.error("Error generating report on server:", error);
