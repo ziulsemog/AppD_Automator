@@ -1,5 +1,6 @@
 {
   "name": "AppD Automator",
   "description": "Automates the generation of daily environment checklists from AppDynamics data using AI, ready for Microsoft Teams.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
